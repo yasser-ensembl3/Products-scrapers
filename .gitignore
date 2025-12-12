@@ -1,0 +1,5 @@
+# Ignore any local config with secrets
+*.env
+.env.*
+secrets.json
+
