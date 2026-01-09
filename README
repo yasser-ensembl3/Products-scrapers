@@ -1,0 +1,28 @@
+# 🕷️ Products Scrapers Collection
+
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat&logo=python)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Maintenance](https://img.shields.io/badge/Maintenance-Active-brightgreen)
+
+## 📖 Overview
+
+**Products Scrapers** is a centralized repository containing a collection of Python scripts designed to extract product data from various e-commerce platforms and websites. 
+
+I have consolidated these tools into a single location to demonstrate different scraping techniques, ranging from static HTML parsing to handling dynamic JavaScript-rendered content. These scripts are designed to fetch data points such as prices, product descriptions, images, reviews, and stock availability.
+
+> **⚠️ Disclaimer:** This repository is for **educational purposes only**. Web scraping may violate the Terms of Service (ToS) of some websites. Please respect `robots.txt` files and use these tools responsibly.
+
+---
+
+## 📂 Repository Structure
+
+The repository is organized by target website to keep the codebase modular and clean.
+
+```text
+Products-scrapers/
+├── 📁 amazon/            # Scraper specific to Amazon (ASIN, Pricing)
+├── 📁 ebay/              # Scraper for eBay listings
+├── 📁 aliexpress/        # Scraper for AliExpress (Dynamic content)
+├── 📁 utils/             # Shared utilities (User-Agent rotation, Proxy handling)
+├── 📄 requirements.txt   # Global dependencies
+└── 📄 README.md          # Project documentation
