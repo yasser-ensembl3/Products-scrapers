@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/public/$1" }
+  ],
+  "functions": {
+    "api/scrape.py": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  }
+}

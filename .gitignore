@@ -3,3 +3,12 @@
 .env.*
 secrets.json
 
+# Debug files
+debug_*.html
+*.png
+
+# OS
+.DS_Store
+
+# Claude
+.claude/

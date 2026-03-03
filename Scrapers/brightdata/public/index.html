@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraper App</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+
+        header { text-align: center; margin-bottom: 40px; }
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header p { color: #888; font-size: 1.1rem; }
+
+        .auth-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .auth-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .auth-btn.disconnected {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-btn.connected {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .auth-btn:hover { transform: translateY(-2px); }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group { margin-bottom: 25px; }
+        label { display: block; margin-bottom: 10px; font-weight: 500; color: #ccc; }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus { outline: none; border-color: #00d4ff; }
+        input[type="text"]::placeholder { color: #666; }
+
+        .scraper-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .scraper-option input { display: none; }
+        .scraper-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .scraper-option label:hover {
+            border-color: rgba(0, 212, 255, 0.5);
+            background: rgba(0, 212, 255, 0.05);
+        }
+        .scraper-option input:checked + label {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+        .scraper-option .icon { font-size: 2rem; margin-bottom: 10px; }
+        .scraper-option .name { font-weight: 600; margin-bottom: 5px; color: #fff; }
+        .scraper-option .desc { font-size: 0.85rem; color: #888; }
+
+        .btn {
+            padding: 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            color: #fff;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-save {
+            background: linear-gradient(90deg, #4caf50, #2e7d32);
+            color: #fff;
+            padding: 15px 30px;
+            margin-top: 20px;
+        }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3); }
+        .btn-save:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .results { display: none; }
+        .results.show { display: block; }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .results-header h2 { font-size: 1.5rem; }
+        .results-actions { display: flex; gap: 10px; align-items: center; }
+        .badge {
+            background: #00d4ff;
+            color: #000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .result-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .result-card img { width: 100%; height: 180px; object-fit: cover; }
+        .result-card .content { padding: 15px; }
+        .result-card h3 { font-size: 1rem; margin-bottom: 10px; line-height: 1.4; }
+        .result-card .meta { display: flex; gap: 15px; color: #888; font-size: 0.9rem; margin-bottom: 10px; flex-wrap: wrap; }
+        .result-card .price { color: #00d4ff; font-weight: 600; font-size: 1.1rem; }
+        .result-card a { color: #7b2cbf; text-decoration: none; font-size: 0.9rem; }
+        .result-card a:hover { text-decoration: underline; }
+
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.show { display: block; }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error, .success {
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            margin-bottom: 20px;
+        }
+        .error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            color: #ff6b6b;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+        .error.show, .success.show { display: block; }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 500;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { background: #4caf50; }
+        .toast.error { background: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="auth-bar">
+            <button class="auth-btn disconnected" id="authBtn" onclick="handleAuth()">
+                <span id="authIcon">🔗</span>
+                <span id="authText">Connecter Google Drive</span>
+            </button>
+        </div>
+
+        <header>
+            <h1>🕷️ Scraper App</h1>
+            <p>Collez un lien, choisissez le scraper, et c'est parti!</p>
+        </header>
+
+        <div class="card">
+            <form id="scrapeForm">
+                <div class="form-group">
+                    <label>URL à scraper</label>
+                    <input type="text" id="url" placeholder="https://..." required>
+                </div>
+
+                <div class="form-group">
+                    <label>Choisir le scraper</label>
+                    <div class="scraper-options">
+                        <div class="scraper-option">
+                            <input type="radio" name="scraper" id="airbnb" value="airbnb" checked>
+                            <label for="airbnb">
+                                <span class="icon">🎭</span>
+                                <span class="name">Airbnb</span>
+                                <span class="desc">Expériences Airbnb</span>
+                            </label>
+                        </div>
+                        <div class="scraper-option">
+                            <input type="radio" name="scraper" id="shopify" value="shopify">
+                            <label for="shopify">
+                                <span class="icon">🛒</span>
+                                <span class="name">Shopify</span>
+                                <span class="desc">Produits Shopify</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">🚀 Lancer le scraping</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Scraping en cours... Cela peut prendre quelques secondes.</p>
+        </div>
+
+        <div class="error" id="error"></div>
+        <div class="success" id="success"></div>
+
+        <div class="card results" id="results">
+            <div class="results-header">
+                <h2>Résultats</h2>
+                <div class="results-actions">
+                    <span class="badge" id="count">0 éléments</span>
+                    <button class="btn btn-save" id="saveBtn" onclick="saveToGoogleDrive()">
+                        💾 Sauvegarder sur Drive
+                    </button>
+                </div>
+            </div>
+            <div class="results-grid" id="resultsGrid"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let currentResults = null;
+        let currentScraper = null;
+        let isAuthenticated = false;
+
+        const form = document.getElementById('scrapeForm');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const resultsGrid = document.getElementById('resultsGrid');
+        const countBadge = document.getElementById('count');
+        const errorDiv = document.getElementById('error');
+        const successDiv = document.getElementById('success');
+        const submitBtn = document.getElementById('submitBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const authBtn = document.getElementById('authBtn');
+        const authIcon = document.getElementById('authIcon');
+        const authText = document.getElementById('authText');
+        const toast = document.getElementById('toast');
+
+        // Vérifier l'état d'authentification au chargement
+        checkAuthStatus();
+
+        // Vérifier si on revient du callback OAuth
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auth') === 'success') {
+            showToast('Google Drive connecté!', 'success');
+            window.history.replaceState({}, document.title, '/');
+            checkAuthStatus();
+        } else if (urlParams.get('auth') === 'error') {
+            showToast('Erreur de connexion', 'error');
+            window.history.replaceState({}, document.title, '/');
+        }
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth-status');
+                const data = await response.json();
+                isAuthenticated = data.authenticated;
+                updateAuthButton();
+            } catch (e) {
+                console.error('Auth check failed:', e);
+            }
+        }
+
+        function updateAuthButton() {
+            if (isAuthenticated) {
+                authBtn.className = 'auth-btn connected';
+                authIcon.textContent = '✓';
+                authText.textContent = 'Drive connecté';
+            } else {
+                authBtn.className = 'auth-btn disconnected';
+                authIcon.textContent = '🔗';
+                authText.textContent = 'Connecter Google Drive';
+            }
+        }
+
+        async function handleAuth() {
+            if (isAuthenticated) return;
+
+            try {
+                const response = await fetch('/api/auth-url');
+                const data = await response.json();
+                window.location.href = data.url;
+            } catch (e) {
+                showToast('Erreur de connexion', 'error');
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const url = document.getElementById('url').value;
+            currentScraper = document.querySelector('input[name="scraper"]:checked').value;
+
+            loading.classList.add('show');
+            results.classList.remove('show');
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/scrape', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, scraper: currentScraper })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Erreur inconnue');
+                }
+
+                currentResults = data;
+                displayResults(data, currentScraper);
+
+            } catch (err) {
+                errorDiv.textContent = '❌ ' + err.message;
+                errorDiv.classList.add('show');
+            } finally {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data, scraperType) {
+            resultsGrid.innerHTML = '';
+            countBadge.textContent = data.count + ' éléments';
+
+            data.data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+
+                if (scraperType === 'airbnb') {
+                    card.innerHTML = `
+                        ${item.image_url ? `<img src="${item.image_url}" alt="${item.title}">` : ''}
+                        <div class="content">
+                            <h3>${item.title || 'Sans titre'}</h3>
+                            <div class="meta">
+                                ${item.rating ? `<span>⭐ ${item.rating}</span>` : ''}
+                                ${item.reviews_count ? `<span>(${item.reviews_count} avis)</span>` : ''}
+                                ${item.duration_minutes ? `<span>⏱️ ${item.duration_minutes} min</span>` : ''}
+                            </div>
+                            <div class="price">${item.price ? item.price + '€' : item.price_label || 'N/A'}</div>
+                            ${item.category ? `<p style="color:#888;font-size:0.85rem;margin:5px 0">${item.category}</p>` : ''}
+                            <a href="${item.url}" target="_blank">Voir l'expérience →</a>
+                        </div>
+                    `;
+                } else if (scraperType === 'shopify') {
+                    card.innerHTML = `
+                        ${item.image_url ? `<img src="${item.image_url}" alt="${item.title}">` : ''}
+                        <div class="content">
+                            <h3>${item.title || 'Sans titre'}</h3>
+                            <div class="meta">
+                                ${item.vendor ? `<span>🏷️ ${item.vendor}</span>` : ''}
+                                ${item.available ? '<span style="color:#4caf50">✓ En stock</span>' : '<span style="color:#f44336">✗ Indisponible</span>'}
+                            </div>
+                            <div class="price">
+                                ${item.price_current ? item.price_current + ' ' + (item.currency || '$') : 'N/A'}
+                                ${item.discount_percent ? `<span style="color:#4caf50;font-size:0.85rem;margin-left:10px">-${item.discount_percent}%</span>` : ''}
+                            </div>
+                            <a href="${item.url}" target="_blank">Voir le produit →</a>
+                        </div>
+                    `;
+                }
+
+                resultsGrid.appendChild(card);
+            });
+
+            results.classList.add('show');
+        }
+
+        async function saveToGoogleDrive() {
+            if (!isAuthenticated) {
+                showToast('Connectez-vous à Google Drive d\'abord', 'error');
+                return;
+            }
+
+            if (!currentResults) {
+                showToast('Aucun résultat à sauvegarder', 'error');
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ Sauvegarde...';
+
+            try {
+                const date = new Date().toISOString().slice(0, 10);
+                const filename = `${currentScraper}_${date}.${currentResults.count}.json`;
+
+                const response = await fetch('/api/save-to-drive', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: filename,
+                        content: {
+                            metadata: {
+                                scraper: currentScraper,
+                                scraped_at: new Date().toISOString(),
+                                total_items: currentResults.count
+                            },
+                            data: currentResults.data
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Sauvegardé: ${filename}`, 'success');
+                } else {
+                    throw new Error(data.error || 'Erreur de sauvegarde');
+                }
+
+            } catch (err) {
+                showToast('Erreur: ' + err.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Sauvegarder sur Drive';
+            }
+        }
+
+        function showToast(message, type) {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

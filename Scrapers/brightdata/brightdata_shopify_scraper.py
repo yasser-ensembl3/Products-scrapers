@@ -6,15 +6,20 @@ Scrape des produits depuis n'importe quel site Shopify
 import requests
 import json
 import re
+import os
 from datetime import datetime
 from typing import Optional, List
 from html import unescape
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement
+load_dotenv('.env.local')
 
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
 
-BRIGHTDATA_API_KEY = "YOUR_BRIGHTDATA_API_KEY"
+BRIGHTDATA_API_KEY = os.getenv("BRIGHTDATA_API_KEY")
 BRIGHTDATA_ZONE = "web_unlocker1"
 BRIGHTDATA_ENDPOINT = "https://api.brightdata.com/request"
 
